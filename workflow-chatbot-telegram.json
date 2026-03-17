@@ -1,0 +1,324 @@
+{
+  "name": "Bot de Clima no Telegram com n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "42bc675c-cb41-4c5f-a4c0-4280f56b6683",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        -32
+      ],
+      "webhookId": "d3c3be08-6d7d-445f-ad1e-936abe20ff18",
+      "credentials": {
+        "telegramApi": {
+          "id": "AKHSLLG3VnTQKhA7",
+          "name": "Telegram opereira_ftr"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Define Parametros').item.json.message.chat.id }}",
+        "text": "❌ Cidade não encontrada. Use o formato Cidade,UF,BR (ex.: São Paulo,SP,BR).",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        48
+      ],
+      "id": "89cb03c7-a017-4f1b-938e-5e66d8f1c69a",
+      "name": "Enviar Mensagem - False",
+      "webhookId": "8f873df1-eb91-4a38-bd05-54627a251bd3",
+      "credentials": {
+        "telegramApi": {
+          "id": "AKHSLLG3VnTQKhA7",
+          "name": "Telegram opereira_ftr"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Define Parametros').item.json.message.chat.id }}",
+        "text": "=🌤️ A temperatura em {{ $json.name }} é de {{ Math.round($json.main.temp) }}ºC\n☁️ Condição: {{ $json.weather[0].description }}\n💧 Umidade: {{ $json.main.humidity }}%\n💨 Vento: {{ $json.wind.speed }} m/s",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        -176
+      ],
+      "id": "0328031d-76ff-46cf-ac20-fcd49a2941a4",
+      "name": "Enviar Mensagem - True",
+      "webhookId": "f6c02c1b-3f13-4793-81cf-fbc541d99e66",
+      "credentials": {
+        "telegramApi": {
+          "id": "AKHSLLG3VnTQKhA7",
+          "name": "Telegram opereira_ftr"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "71a08bb0-827f-4858-837e-66c8c49ca5e9",
+              "leftValue": "={{ $json.cod }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "acc1ae59-9b62-4d3c-90a6-9d2600e4fc71",
+              "leftValue": "={{ $json.main.temp }}",
+              "rightValue": {},
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        -176
+      ],
+      "id": "42e2499c-5632-4377-a8a7-b3b5e39ed31b",
+      "name": "Valida Execução do Retorno"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openweathermap.org/data/2.5/weather",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "appid",
+              "value": "={{ $json.appid }}"
+            },
+            {
+              "name": "lang",
+              "value": "={{ $json.lang }}"
+            },
+            {
+              "name": "units",
+              "value": "={{ $json.units }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -608,
+        -176
+      ],
+      "id": "43d4c3a7-f46b-4164-8a96-26375a5096af",
+      "name": "HTTP Requisição API",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e92a0036-347b-43ad-81d6-1c7bb285e3ed",
+              "name": "message.chat.id",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "number"
+            },
+            {
+              "id": "4726495a-d228-454e-8833-0ccbae75f437",
+              "name": "message.chat.first_name",
+              "value": "={{ $json.message.chat.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "efdf2203-a8d9-4e3c-a081-36814c33a1ad",
+              "name": "message.text",
+              "value": "={{ ($json.message.text || '').trim() + ',BR' }}",
+              "type": "string"
+            },
+            {
+              "id": "01247dfb-0fd2-4054-b969-774c360f6383",
+              "name": "appid",
+              "value": "={{$env.OPENWEATHER_API_KEY}}",
+              "type": "string"
+            },
+            {
+              "id": "b830b7eb-4f0e-4597-a25b-93fdabd7f07b",
+              "name": "lang",
+              "value": "pt_br",
+              "type": "string"
+            },
+            {
+              "id": "c25253ed-148f-4120-b2a3-4e48eab77979",
+              "name": "units",
+              "value": "metric",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "selected",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1040,
+        -32
+      ],
+      "id": "f294794d-9a50-4370-8f49-dfc10a14120a",
+      "name": "Define Parametros"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f71fff06-fbc2-4689-af7b-746dfc5e96c6",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -864,
+        -32
+      ],
+      "id": "d7af3fcf-48f5-49ec-8383-0fe7854e8110",
+      "name": "Valida se a cidade não está vazia"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Define Parametros",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valida Execução do Retorno": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensagem - True",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Mensagem - False",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Requisição API": {
+      "main": [
+        [
+          {
+            "node": "Valida Execução do Retorno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define Parametros": {
+      "main": [
+        [
+          {
+            "node": "Valida se a cidade não está vazia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valida se a cidade não está vazia": {
+      "main": [
+        [
+          {
+            "node": "HTTP Requisição API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Mensagem - False",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "4d50a22a-a19f-4d3b-8f27-c90bd5ebbc6d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3191e5a47cbe4ca86a7466c8f0bd4d626b5dff3b2e04f183198efe50023fa3d4"
+  },
+  "id": "M-GsaconV-NTkSVc8anwj",
+  "tags": []
+}
